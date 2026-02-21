@@ -10,6 +10,7 @@ const router = express.Router();
 const taskController = require("../controllers/task.controller");
 const authMiddleware = require("../middleware/auth.middleware");
 
+// Protect all task routes
 router.use(authMiddleware);
 
 /**
@@ -41,8 +42,8 @@ router.use(authMiddleware);
  *       201:
  *         description: Task created
  */
-
 router.post("/", taskController.createTask);
+
 /**
  * @swagger
  * /api/tasks:
@@ -70,9 +71,68 @@ router.post("/", taskController.createTask);
  *       401:
  *         description: Unauthorized
  */
-router.get("/", authenticateUser, taskController.getTasks);
+router.get("/", taskController.getTasks);
+
+/**
+ * @swagger
+ * /api/tasks/{id}:
+ *   get:
+ *     summary: Get a single task by ID
+ *     tags: [Tasks]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *     responses:
+ *       200:
+ *         description: Task found
+ *       404:
+ *         description: Task not found
+ */
 router.get("/:id", taskController.getTaskById);
+
+/**
+ * @swagger
+ * /api/tasks/{id}:
+ *   put:
+ *     summary: Update a task
+ *     tags: [Tasks]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *     responses:
+ *       200:
+ *         description: Task updated
+ */
 router.put("/:id", taskController.updateTask);
+
+/**
+ * @swagger
+ * /api/tasks/{id}:
+ *   delete:
+ *     summary: Delete a task
+ *     tags: [Tasks]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *     responses:
+ *       200:
+ *         description: Task deleted
+ */
 router.delete("/:id", taskController.deleteTask);
 
 module.exports = router;
