@@ -9,12 +9,38 @@ exports.createTask = async (req, res, next) => {
   }
 };
 
-exports.getTasks = async (req, res, next) => {
+exports.getTasks = async (req, res) => {
   try {
-    const tasks = await taskService.getTasks(req.query, req.user.userId);
-    res.json(tasks);
-  } catch (err) {
-    next(err);
+    const userId = req.user.id;
+
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 5;
+    const skip = (page - 1) * limit;
+
+    const tasks = await prisma.task.findMany({
+      where: { userId },
+      skip,
+      take: limit,
+      orderBy: { createdAt: "desc" },
+    });
+
+    const totalTasks = await prisma.task.count({
+      where: { userId },
+    });
+
+    return res.status(200).json({
+      success: true,
+      page,
+      totalPages: Math.ceil(totalTasks / limit),
+      totalTasks,
+      data: tasks,
+    });
+
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: "Failed to fetch tasks",
+    });
   }
 };
 

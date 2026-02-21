@@ -43,7 +43,34 @@ router.use(authMiddleware);
  */
 
 router.post("/", taskController.createTask);
-router.get("/", taskController.getTasks);
+/**
+ * @swagger
+ * /api/tasks:
+ *   get:
+ *     summary: Get all tasks with pagination
+ *     tags: [Tasks]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *         description: Page number
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 5
+ *         description: Number of tasks per page
+ *     responses:
+ *       200:
+ *         description: Tasks fetched successfully
+ *       401:
+ *         description: Unauthorized
+ */
+router.get("/", authenticateUser, taskController.getTasks);
 router.get("/:id", taskController.getTaskById);
 router.put("/:id", taskController.updateTask);
 router.delete("/:id", taskController.deleteTask);
