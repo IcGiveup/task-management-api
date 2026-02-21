@@ -9,11 +9,13 @@ const options = {
       version: "1.0.0",
       description: "Backend API for managing tasks with authentication",
     },
-    servers: [
-      {
-        url: "http://localhost:5000",
-      },
-    ],
+servers: [
+  {
+    url: process.env.NODE_ENV === "production"
+      ? "https://task-management-api-twna.onrender.com"
+      : "http://localhost:5000",
+  },
+],
     components: {
       securitySchemes: {
         bearerAuth: {
