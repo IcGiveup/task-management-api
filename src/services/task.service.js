@@ -1,67 +1,82 @@
 const prisma = require("../config/prisma");
 
-exports.createTask = async (data, userId) => {
-  const { title, description, dueDate } = data;
-
-  if (!title) throw new Error("Title is required");
-
-  if (new Date(dueDate) <= new Date())
-    throw new Error("Due date must be in the future");
-
-  return prisma.task.create({
-    data: {
-      title,
-      description,
-      dueDate: new Date(dueDate),
-      userId,
-    },
-  });
+const createTask = async (data) => {
+  return prisma.task.create({ data });
 };
 
-exports.getTasks = async (query, userId) => {
-  const { page = 1, limit = 10, status } = query;
+const getTasks = async ({ userId, page, limit, status }) => {
+  const skip = (page - 1) * limit;
 
-  return prisma.task.findMany({
-    where: {
-      userId,
-      status: status || undefined,
-    },
-    skip: (page - 1) * limit,
-    take: Number(limit),
+  const where = { userId };
+
+  if (status) {
+    where.status = status;
+  }
+
+  const tasks = await prisma.task.findMany({
+    where,
+    skip,
+    take: limit,
+    orderBy: { createdAt: "desc" },
   });
+
+  const total = await prisma.task.count({ where });
+
+  return {
+    total,
+    page,
+    limit,
+    data: tasks,
+  };
 };
 
-exports.getTaskById = async (id, userId) => {
+const getTaskById = async (id, userId) => {
   const task = await prisma.task.findFirst({
-    where: { id: Number(id), userId },
+    where: { id: parseInt(id), userId },
   });
 
-  if (!task) throw new Error("Task not found");
+  if (!task) {
+    throw new Error("Task not found");
+  }
 
   return task;
 };
 
-exports.updateTask = async (id, data, userId) => {
+const updateTask = async (id, data, userId) => {
   const task = await prisma.task.findFirst({
-    where: { id: Number(id), userId },
+    where: { id: parseInt(id), userId },
   });
 
-  if (!task) throw new Error("Task not found");
+  if (!task) {
+    throw new Error("Task not found");
+  }
 
   return prisma.task.update({
-    where: { id: Number(id) },
+    where: { id: parseInt(id) },
     data,
   });
 };
 
-exports.deleteTask = async (id, userId) => {
+const deleteTask = async (id, userId) => {
   const task = await prisma.task.findFirst({
-    where: { id: Number(id), userId },
+    where: { id: parseInt(id), userId },
   });
 
-  if (!task) throw new Error("Task not found");
+  if (!task) {
+    throw new Error("Task not found");
+  }
 
-  await prisma.task.delete({ where: { id: Number(id) } });
+  await prisma.task.delete({
+    where: { id: parseInt(id) },
+  });
 
   return { message: "Task deleted successfully" };
+};
+
+module.exports = {
+  createTask,
+  getTasks,
+  getTaskById,
+  updateTask,
+  deleteTask,
 };

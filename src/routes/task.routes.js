@@ -35,12 +35,17 @@ router.use(authMiddleware);
  *                 type: string
  *               description:
  *                 type: string
+ *               status:
+ *                 type: string
+ *                 enum: [pending, in-progress, completed]
  *               dueDate:
  *                 type: string
  *                 format: date-time
  *     responses:
  *       201:
  *         description: Task created
+ *       400:
+ *         description: Validation error
  */
 router.post("/", taskController.createTask);
 
@@ -48,7 +53,7 @@ router.post("/", taskController.createTask);
  * @swagger
  * /api/tasks:
  *   get:
- *     summary: Get all tasks with pagination
+ *     summary: Get all tasks with pagination and optional status filtering
  *     tags: [Tasks]
  *     security:
  *       - bearerAuth: []
@@ -65,6 +70,12 @@ router.post("/", taskController.createTask);
  *           type: integer
  *           default: 5
  *         description: Number of tasks per page
+ *       - in: query
+ *         name: status
+ *         schema:
+ *           type: string
+ *           enum: [pending, in-progress, completed]
+ *         description: Filter tasks by status
  *     responses:
  *       200:
  *         description: Tasks fetched successfully
@@ -109,9 +120,28 @@ router.get("/:id", taskController.getTaskById);
  *         required: true
  *         schema:
  *           type: integer
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               title:
+ *                 type: string
+ *               description:
+ *                 type: string
+ *               status:
+ *                 type: string
+ *                 enum: [pending, in-progress, completed]
+ *               dueDate:
+ *                 type: string
+ *                 format: date-time
  *     responses:
  *       200:
  *         description: Task updated
+ *       404:
+ *         description: Task not found
  */
 router.put("/:id", taskController.updateTask);
 
@@ -132,6 +162,8 @@ router.put("/:id", taskController.updateTask);
  *     responses:
  *       200:
  *         description: Task deleted
+ *       404:
+ *         description: Task not found
  */
 router.delete("/:id", taskController.deleteTask);
 

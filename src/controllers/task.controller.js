@@ -1,79 +1,114 @@
 const taskService = require("../services/task.service");
 
-exports.createTask = async (req, res, next) => {
+const createTask = async (req, res, next) => {
   try {
-    const task = await taskService.createTask(req.body, req.user.userId);
-    res.status(201).json(task);
+    const { title, description, dueDate, status } = req.body;
+
+    if (!title) {
+      return res.status(400).json({
+        success: false,
+        message: "Title is required",
+      });
+    }
+
+    if (!dueDate) {
+      return res.status(400).json({
+        success: false,
+        message: "Due date is required",
+      });
+    }
+
+    const now = new Date();
+    const due = new Date(dueDate);
+
+    if (due <= now) {
+      return res.status(400).json({
+        success: false,
+        message: "Due date must be a future date",
+      });
+    }
+
+    const task = await taskService.createTask({
+      title,
+      description,
+      dueDate: due,
+      status: status || "pending",
+      userId: req.user.id,
+    });
+
+    res.status(201).json({
+      success: true,
+      data: task,
+    });
   } catch (err) {
     next(err);
   }
 };
 
-exports.getTasks = async (req, res) => {
+const getTasks = async (req, res, next) => {
   try {
-    const userId = req.user.id;
+    const { page = 1, limit = 5, status } = req.query;
 
-    const page = parseInt(req.query.page) || 1;
-    const limit = parseInt(req.query.limit) || 5;
-    const skip = (page - 1) * limit;
+    const pageNumber = parseInt(page);
+    const limitNumber = parseInt(limit);
 
-    const tasks = await prisma.task.findMany({
-      where: { userId },
-      skip,
-      take: limit,
-      orderBy: { createdAt: "desc" },
+    const result = await taskService.getTasks({
+      userId: req.user.id,
+      page: pageNumber,
+      limit: limitNumber,
+      status,
     });
 
-    const totalTasks = await prisma.task.count({
-      where: { userId },
-    });
-
-    return res.status(200).json({
+    res.status(200).json({
       success: true,
-      page,
-      totalPages: Math.ceil(totalTasks / limit),
-      totalTasks,
-      data: tasks,
+      ...result,
     });
-
-  } catch (error) {
-    return res.status(500).json({
-      success: false,
-      message: "Failed to fetch tasks",
-    });
+  } catch (err) {
+    next(err);
   }
 };
 
-exports.getTaskById = async (req, res, next) => {
+const getTaskById = async (req, res, next) => {
   try {
-    const task = await taskService.getTaskById(req.params.id, req.user.userId);
+    const task = await taskService.getTaskById(
+      req.params.id,
+      req.user.id
+    );
     res.json(task);
   } catch (err) {
     next(err);
   }
 };
 
-exports.updateTask = async (req, res, next) => {
+const updateTask = async (req, res, next) => {
   try {
     const task = await taskService.updateTask(
       req.params.id,
       req.body,
-      req.user.userId
+      req.user.id
     );
-res.status(201).json(task);
+    res.json(task);
   } catch (err) {
     next(err);
   }
 };
 
-exports.deleteTask = async (req, res, next) => {
+const deleteTask = async (req, res, next) => {
   try {
     const result = await taskService.deleteTask(
       req.params.id,
-      req.user.userId
+      req.user.id
     );
     res.json(result);
   } catch (err) {
     next(err);
   }
+};
+
+module.exports = {
+  createTask,
+  getTasks,
+  getTaskById,
+  updateTask,
+  deleteTask,
 };
